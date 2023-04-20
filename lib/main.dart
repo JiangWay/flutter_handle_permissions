@@ -115,9 +115,44 @@
 // }
 
 import 'package:flutter/material.dart';
-import 'package:flutter_handle_permissions/image_screen.dart';
+import 'package:flutter_handle_permissions/permissions_list.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 初始化 FlutterLocalNotificationsPlugin 實體
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  // 設定本地推播的屬性
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('app_icon');
+  final IOSInitializationSettings initializationSettingsIOS =
+      IOSInitializationSettings(
+          requestSoundPermission: true,
+          requestBadgePermission: true,
+          requestAlertPermission: true,
+          onDidReceiveLocalNotification:
+              (int id, String? title, String? body, String? payload) async {});
+  final InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
+
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+      onSelectNotification: (String? payload) async {
+    if (payload != null) {
+      debugPrint('notification payload: $payload');
+    }
+  });
+
+  var iosPlatformChannelSpecifics = const IOSNotificationDetails(
+      sound: 'sound.mp3', presentAlert: true, presentBadge: true);
+  var platformChannelSpecifics = NotificationDetails(
+      // android: androidPlatformChannelSpecifics,
+      iOS: iosPlatformChannelSpecifics);
+  await flutterLocalNotificationsPlugin.show(
+      0, '通知標題', '通知內容', platformChannelSpecifics);
+
   runApp(const App());
 }
 
@@ -129,9 +164,10 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.green,
+        primarySwatch: Colors.yellow,
       ),
-      home: const ImageScreen(),
+      // home: const ImageScreen(),
+      home: PermissionsList(),
     );
   }
 }
